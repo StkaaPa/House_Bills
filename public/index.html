@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="pt-PT">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Contas da Casa</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Familjen+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="styles.css">
+<script src="chart.umd.js"></script>
+</head>
+<body>
+<main class="wrap">
+  <header class="top">
+    <div>
+      <p class="eyebrow">Controlo de pagamentos</p>
+      <h1>Contas da Casa</h1>
+    </div>
+    <div class="yearnav" role="group" aria-label="Escolher ano">
+      <button id="prev" type="button" aria-label="Ano anterior">‹</button>
+      <output id="yearLabel" aria-live="polite">2026</output>
+      <button id="next" type="button" aria-label="Ano seguinte">›</button>
+    </div>
+  </header>
+
+  <section aria-label="Resumo do ano" class="summary">
+    <div class="fig paid"><p class="label">Já pago</p><p class="value num" id="sumPaid">0,00 €</p><p class="sub" id="subPaid">0 pagamentos</p></div>
+    <div class="fig due"><p class="label">Em falta</p><p class="value num" id="sumDue">0,00 €</p><p class="sub" id="subDue">Nada em falta</p></div>
+    <div class="fig"><p class="label">Total registado</p><p class="value num" id="sumAll">0,00 €</p><p class="sub" id="subAll">Preencha os valores abaixo</p></div>
+  </section>
+
+  <section class="salary" aria-label="Ordenado">
+    <div>
+      <label for="salary">Ordenado mensal líquido (€)</label>
+      <p class="note">Serve de base para calcular o peso da tua metade das contas em cada mês. Se um mês tiver outro valor (por exemplo com subsídio), altere o campo “Ordenado” nessa linha.</p>
+    </div>
+    <input class="field" id="salary" type="text" inputmode="decimal" autocomplete="off" placeholder="0,00">
+  </section>
+
+  <section aria-labelledby="paidTitle">
+    <div class="section-head">
+      <h2 id="paidTitle">Total pago por despesa</h2>
+      <p id="paidNote">Soma dos pagamentos marcados como pagos.</p>
+    </div>
+    <div class="avgs" id="paidCats"></div>
+  </section>
+
+  <section aria-labelledby="avgTitle">
+    <div class="section-head">
+      <h2 id="avgTitle">Média anual</h2>
+      <p id="avgNote">Média dos meses com valor registado.</p>
+    </div>
+    <div class="avgs" id="avgs"></div>
+  </section>
+
+  <section aria-labelledby="evoTitle">
+    <div class="section-head">
+      <h2 id="evoTitle">Evolução das médias anuais</h2>
+      <p>Média mensal de cada despesa em cada ano, sobre o valor total.</p>
+    </div>
+    <div class="evo" id="evo"><p class="empty">A carregar…</p></div>
+    <details class="evotable">
+      <summary>Ver em tabela</summary>
+      <div class="tablewrap"><table id="evoTable"></table></div>
+    </details>
+  </section>
+
+  <section aria-labelledby="ledgerTitle">
+    <div class="section-head">
+      <h2 id="ledgerTitle">Mês a mês</h2>
+      <p>Escreva o valor total da despesa (a metade aparece por baixo) e carregue em “Por pagar” quando estiver liquidado.</p>
+    </div>
+    <div class="toolbar">
+      <label class="filter" for="onlyDue"><input type="checkbox" id="onlyDue"> Mostrar só meses com pagamentos em falta</label>
+      <span class="status" id="status" role="status" aria-live="polite"></span>
+    </div>
+    <div class="ledger">
+      <div class="head" aria-hidden="true">
+        <span>Mês</span><span>Renda</span><span>Luz</span><span>Gás</span><span>Água</span><span>Telecom.</span><span>Total e peso</span>
+      </div>
+      <div id="rows"></div>
+      <p class="empty" id="emptyMsg" hidden>Nenhum mês com pagamentos em falta.</p>
+    </div>
+    <p class="note" id="localNote" hidden style="margin-top:10px">Sem ligação à base de dados. Confirme que o Docker está a correr (docker compose up -d) e atualize a página. Nada é guardado enquanto esta mensagem estiver visível.</p>
+  </section>
+</main>
+
+<script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,200 @@
+/* Layout: caderno de contas. Resumo do ano, ordenado, médias anuais e uma linha por mês com cinco despesas e o total do mês. */
+:root {
+  --bg: #eef3f1;
+  --surface: #ffffff;
+  --ink: #14231f;
+  --muted: #5b6b66;
+  --line: #d5dfdb;
+  --accent: #0b6b5b;
+  --accent-soft: #d9eee8;
+  --ok: #17724a;
+  --on-ok: #ffffff;
+  --ok-soft: #ddf1e5;
+  --warn: #a4530a;
+  --warn-soft: #fbe9d2;
+  --field: #f7faf9;
+  --s1: #2a78d6; --s2: #eb6834; --s3: #1baf7a; --s4: #eda100; --s5: #e87ba4;
+  --font-display: "Familjen Grotesk", "Helvetica Neue", Arial, sans-serif;
+  --font-body: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-num: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0e1614; --surface: #15201d; --ink: #e6f0ec; --muted: #93a6a0; --line: #27362f;
+    --accent: #4fc3a9; --accent-soft: #17332d; --ok: #5ccb93; --on-ok: #0e1614; --ok-soft: #163226;
+    --warn: #f0a55a; --warn-soft: #3a2a14; --field: #0f1a17; --s1: #3987e5; --s2: #d95926; --s3: #199e70; --s4: #c98500; --s5: #d55181;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0e1614; --surface: #15201d; --ink: #e6f0ec; --muted: #93a6a0; --line: #27362f;
+  --accent: #4fc3a9; --accent-soft: #17332d; --ok: #5ccb93; --on-ok: #0e1614; --ok-soft: #163226;
+  --warn: #f0a55a; --warn-soft: #3a2a14; --field: #0f1a17; --s1: #3987e5; --s2: #d95926; --s3: #199e70; --s4: #c98500; --s5: #d55181;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font: 15px/1.5 var(--font-body);
+  padding-block: 28px 48px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+.wrap { max-width: 1120px; margin: 0 auto; display: grid; gap: 28px; }
+h1, h2, h3, p { margin: 0; }
+h1, h2 { font-family: var(--font-display); text-wrap: balance; }
+.eyebrow { font-size: 12px; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); font-weight: 500; }
+.num { font-family: var(--font-num); font-variant-numeric: tabular-nums; }
+button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* Topo */
+.top { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 16px; }
+.top h1 { font-size: clamp(30px, 6vw, 44px); line-height: 1.05; font-weight: 700; margin-top: 4px; }
+.yearnav { display: flex; align-items: center; gap: 4px; background: var(--surface); border: 1px solid var(--line); border-radius: 999px; padding: 4px; }
+.yearnav button { width: 36px; height: 36px; border-radius: 50%; border: 0; background: transparent; color: var(--ink); font-size: 20px; line-height: 1; cursor: pointer; }
+.yearnav button:hover { background: var(--accent-soft); }
+.yearnav output { min-width: 4.5rem; text-align: center; font-family: var(--font-display); font-weight: 700; font-size: 20px; }
+
+/* Resumo */
+.summary { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); background: var(--surface); border: 1px solid var(--line); border-radius: 12px; }
+.fig { padding: 18px 20px; min-width: 0; }
+.fig + .fig { border-left: 1px solid var(--line); }
+.fig .label { font-size: 13px; color: var(--muted); }
+.fig .value { font-family: var(--font-display); font-weight: 700; font-size: clamp(22px, 4vw, 32px); line-height: 1.15; margin-top: 2px; overflow-wrap: anywhere; }
+.fig .sub { font-size: 13px; color: var(--muted); margin-top: 2px; }
+.fig.due .value { color: var(--warn); }
+.fig.paid .value { color: var(--ok); }
+
+/* Ordenado */
+.salary { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px 24px; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 16px 20px; }
+.salary > div { flex: 1 1 280px; min-width: 0; }
+.salary label { font-family: var(--font-display); font-size: 18px; font-weight: 600; }
+.salary .note { margin-top: 2px; }
+.field { width: 100%; min-width: 0; padding: 8px 10px; text-align: right; font: 500 14px var(--font-num); font-variant-numeric: tabular-nums; color: var(--ink); background: var(--field); border: 1px solid var(--line); border-radius: 6px; }
+.field::placeholder { color: var(--muted); opacity: .6; }
+.salary .field { width: 12rem; max-width: 100%; font-size: 16px; padding: 10px 12px; }
+
+/* Médias */
+.section-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 4px 16px; margin-bottom: 12px; }
+.section-head h2 { font-size: 22px; font-weight: 600; }
+.section-head p { color: var(--muted); font-size: 13px; }
+.avgs { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; }
+.avg { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; min-width: 0; }
+.avg .label { font-size: 13px; color: var(--muted); }
+.avg .value { font-family: var(--font-num); font-variant-numeric: tabular-nums; font-size: 20px; font-weight: 500; margin-top: 4px; overflow-wrap: anywhere; }
+.avg .sub { font-size: 12px; color: var(--muted); margin-top: 2px; }
+.avg.total { background: var(--accent-soft); border-color: transparent; }
+.avg.total .label { color: var(--accent); font-weight: 600; }
+
+/* Registo mensal */
+.toolbar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 16px; margin-bottom: 10px; }
+.filter { display: inline-flex; align-items: center; gap: 8px; font-size: 14px; cursor: pointer; }
+.filter input { width: 18px; height: 18px; margin: 0; accent-color: var(--accent); cursor: pointer; }
+.status { font-size: 13px; color: var(--muted); }
+.status.err { color: var(--warn); }
+
+.ledger { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
+.head, .row {
+  display: grid; align-items: start; gap: 10px;
+  grid-template-columns: 8.5rem repeat(5, minmax(0, 1fr)) 10.5rem;
+  padding: 14px 16px;
+}
+.head { align-items: center; background: var(--field); border-bottom: 1px solid var(--line); font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); font-weight: 500; padding-block: 10px; }
+.row + .row { border-top: 1px solid var(--line); }
+.row[hidden] { display: none; }
+.row.now { box-shadow: inset 3px 0 0 var(--accent); }
+.mes { min-width: 0; display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; padding-top: 6px; }
+.mes strong { font-family: var(--font-display); font-size: 18px; font-weight: 600; line-height: 1.2; }
+.mes .yr { color: var(--muted); font-weight: 500; font-size: 14px; }
+.tag { font-size: 11px; padding: 1px 8px; border-radius: 999px; background: var(--accent-soft); color: var(--accent); font-weight: 600; }
+.chip { font-size: 12px; font-weight: 600; padding: 2px 10px; border-radius: 999px; white-space: nowrap; background: var(--field); color: var(--muted); border: 1px solid var(--line); }
+.chip.ok { background: var(--ok-soft); color: var(--ok); border-color: transparent; }
+.chip.due { background: var(--warn-soft); color: var(--warn); border-color: transparent; }
+
+.cell { display: grid; gap: 6px; min-width: 0; }
+.cell::before { content: attr(data-label); display: none; font-size: 14px; color: var(--ink); }
+.vbox { display: grid; gap: 3px; min-width: 0; }
+.half { min-height: 1.3em; font: 400 12px/1.3 var(--font-num); font-variant-numeric: tabular-nums; color: var(--muted); text-align: right; overflow-wrap: anywhere; }
+.cell.is-due .field.v { border-color: var(--warn); background: var(--warn-soft); }
+.cell.is-paid .field.v { border-color: transparent; background: var(--ok-soft); }
+
+/* Botão Por pagar / Pago */
+.paidline { display: block; width: 100%; position: relative; cursor: pointer; }
+.sr { position: absolute; opacity: 0; width: 1px; height: 1px; margin: 0; pointer-events: none; }
+.pill {
+  display: flex; align-items: center; justify-content: center; gap: 7px; width: 100%;
+  padding: 6px 10px; border-radius: 999px; border: 1.5px solid var(--line);
+  font-size: 13px; font-weight: 500; color: var(--muted); background: transparent; user-select: none;
+}
+.pill::before {
+  content: ""; width: 15px; height: 15px; flex: none; border-radius: 50%; border: 1.5px solid currentColor;
+  display: grid; place-items: center; font-size: 10px; line-height: 1; font-weight: 700;
+}
+.pill .t-on { display: none; }
+.paidline:hover .pill { border-color: var(--accent); color: var(--accent); }
+.cell.is-due .pill { border-color: var(--warn); color: var(--warn); }
+.cell.is-due .paidline:hover .pill { background: var(--warn-soft); }
+.sr:checked + .pill { background: var(--ok); border-color: var(--ok); color: var(--on-ok); font-weight: 600; }
+.sr:checked + .pill::before { content: "✓"; background: var(--on-ok); border-color: var(--on-ok); color: var(--ok); }
+.sr:checked + .pill .t-on { display: inline; }
+.sr:checked + .pill .t-off { display: none; }
+.sr:focus-visible + .pill { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* Total do mês e peso no ordenado */
+.tot { display: grid; gap: 6px; min-width: 0; padding-top: 2px; }
+.tl { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; min-width: 0; }
+.tl .lbl { font-size: 12px; color: var(--muted); white-space: nowrap; }
+.tl .val { font-family: var(--font-num); font-variant-numeric: tabular-nums; font-size: 14px; font-weight: 500; text-align: right; overflow-wrap: anywhere; }
+.tl.big .val { font-size: 16px; font-weight: 500; }
+.bar { height: 4px; border-radius: 2px; background: var(--line); overflow: hidden; }
+.bar i { display: block; height: 100%; width: 0; background: var(--accent); border-radius: 2px; }
+.tl.sal .field { width: 6.2rem; padding: 4px 8px; font-size: 12px; }
+
+.evo { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 10px; }
+.mini { display: grid; grid-template-columns: minmax(0, 1fr); gap: 2px; align-content: start; min-width: 0; }
+.mini .mh { display: flex; align-items: center; gap: 8px; }
+.mini .mh h3 { font-size: 14px; font-weight: 600; font-family: var(--font-body); }
+.mini .dot { width: 10px; height: 10px; border-radius: 50%; flex: none; }
+.mini .mv { font-family: var(--font-num); font-variant-numeric: tabular-nums; font-size: 20px; font-weight: 500; margin-top: 2px; }
+.mini .mv span { font-family: var(--font-body); font-size: 12px; color: var(--muted); }
+.mini .md { font-size: 12px; color: var(--muted); }
+.mini .md.up { color: var(--warn); }
+.mini .md.down { color: var(--ok); }
+.mini .mc { position: relative; height: 140px; margin-top: 8px; }
+details.evotable { margin-top: 12px; }
+details.evotable summary { cursor: pointer; font-size: 14px; color: var(--accent); width: fit-content; }
+.tablewrap { overflow-x: auto; margin-top: 10px; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; }
+.tablewrap table { width: 100%; border-collapse: collapse; font-size: 14px; }
+.tablewrap th, .tablewrap td { padding: 8px 12px; text-align: right; white-space: nowrap; border-top: 1px solid var(--line); font-variant-numeric: tabular-nums; }
+.tablewrap thead th { border-top: 0; background: var(--field); color: var(--muted); font-size: 12px; font-weight: 500; letter-spacing: .06em; text-transform: uppercase; }
+.tablewrap th:first-child, .tablewrap td:first-child { text-align: left; font-weight: 500; }
+.empty { padding: 28px 16px; text-align: center; color: var(--muted); }
+.note { font-size: 13px; color: var(--muted); }
+
+@media (max-width: 860px) {
+  .summary { grid-template-columns: 1fr; }
+  .fig + .fig { border-left: 0; border-top: 1px solid var(--line); }
+  .fig { padding: 14px 16px; }
+  .head { display: none; }
+  .row { grid-template-columns: minmax(0, 1fr); gap: 10px; padding: 16px; align-items: stretch; }
+  .mes { padding-top: 0; }
+  .cell { grid-template-columns: 7.5rem minmax(0, 1fr) auto; align-items: center; gap: 8px; }
+  .cell::before { display: block; }
+  .paidline { width: auto; }
+  .pill { min-width: 7rem; }
+  .tot { border-top: 1px dashed var(--line); padding-top: 12px; }
+  .tl .lbl { font-size: 13px; }
+  .tl .val { font-size: 15px; }
+  .tl.big .val { font-size: 18px; }
+  .tl.sal .field { width: 8rem; font-size: 14px; padding: 6px 10px; }
+}
+@media (max-width: 420px) {
+  .cell { grid-template-columns: 5.5rem minmax(0, 1fr) auto; }
+  .pill { min-width: 6.4rem; }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .field, .chip, .pill, .bar i { transition: background-color .15s, border-color .15s, color .15s, width .25s; }
+}
