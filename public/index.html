@@ -14,18 +14,34 @@
     <div>
       <p class="eyebrow">Controlo de pagamentos</p>
       <h1>Contas da Casa</h1>
+      <p class="since" id="sinceLine" hidden><span id="sinceText"></span> <button type="button" class="linkbtn" id="changeStart">Alterar</button></p>
     </div>
-    <div class="yearnav" role="group" aria-label="Escolher ano">
+    <div class="yearnav" id="yearnav" role="group" aria-label="Escolher ano">
       <button id="prev" type="button" aria-label="Ano anterior">‹</button>
       <output id="yearLabel" aria-live="polite">2026</output>
       <button id="next" type="button" aria-label="Ano seguinte">›</button>
     </div>
   </header>
 
+  <section class="setup" id="setup" hidden aria-labelledby="setupTitle">
+    <h2 id="setupTitle">Quando começou a registar?</h2>
+    <p class="note" id="setupNote">Escolha o mês e o ano do primeiro pagamento que quer registar. Os meses anteriores não aparecem nem entram nas médias.</p>
+    <form id="setupForm" class="setupform">
+      <label class="sfield" for="setMonth">Mês<select class="select" id="setMonth"></select></label>
+      <label class="sfield" for="setYear">Ano<select class="select" id="setYear"></select></label>
+      <button type="submit" class="btn">Guardar</button>
+      <button type="button" class="btn ghost" id="setupCancel" hidden>Cancelar</button>
+    </form>
+    <p class="note err" id="setupErr" role="alert"></p>
+  </section>
+
+  <div class="appbody" id="appBody">
+
   <section aria-label="Resumo do ano" class="summary">
     <div class="fig paid"><p class="label">Já pago</p><p class="value num" id="sumPaid">0,00 €</p><p class="sub" id="subPaid">0 pagamentos</p></div>
     <div class="fig due"><p class="label">Em falta</p><p class="value num" id="sumDue">0,00 €</p><p class="sub" id="subDue">Nada em falta</p></div>
     <div class="fig"><p class="label">Total registado</p><p class="value num" id="sumAll">0,00 €</p><p class="sub" id="subAll">Preencha os valores abaixo</p></div>
+    <p class="cumnote" id="cumNote"></p>
   </section>
 
   <section class="salary" aria-label="Ordenado">
@@ -75,13 +91,14 @@
     </div>
     <div class="ledger">
       <div class="head" aria-hidden="true">
-        <span>Mês</span><span>Renda</span><span>Luz</span><span>Gás</span><span>Água</span><span>Telecom.</span><span>Total e peso</span>
+        <span>Mês</span><span>Renda</span><span>Luz e Gás</span><span>Água</span><span>Telecom.</span><span>Total e peso</span>
       </div>
       <div id="rows"></div>
       <p class="empty" id="emptyMsg" hidden>Nenhum mês com pagamentos em falta.</p>
     </div>
     <p class="note" id="localNote" hidden style="margin-top:10px">Sem ligação à base de dados. Confirme que o Docker está a correr (docker compose up -d) e atualize a página. Nada é guardado enquanto esta mensagem estiver visível.</p>
   </section>
+  </div>
 </main>
 
 <script src="app.js"></script>

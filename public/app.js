@@ -1,12 +1,13 @@
 (function () {
-  var CATS = [["renda", "Renda"], ["luz", "Luz"], ["gas", "Gás"], ["agua", "Água"], ["tel", "Telecomunicações"]];
+  var CATS = [["renda", "Renda"], ["luzgas", "Luz e Gás"], ["agua", "Água"], ["tel", "Telecomunicações"]];
   var MESES = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
   var eur = new Intl.NumberFormat("pt-PT", { style: "currency", currency: "EUR" });
   var dec = new Intl.NumberFormat("pt-PT", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   var pctFmt = new Intl.NumberFormat("pt-PT", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
   var NOW = new Date();
 
-  var state = { year: NOW.getFullYear(), salary: null, months: blank() };
+  var state = { year: NOW.getFullYear(), salary: null, months: blank(), start: null };
+  var prev = { paid: 0, paidN: 0, due: 0, dueN: 0, dueMonths: 0 }; // totais dos anos anteriores
   var loaded = false, dirty = false, saving = false, again = false, timer = null;
 
   var $ = function (id) { return document.getElementById(id); };
@@ -28,6 +29,11 @@
     return isFinite(n) && n >= 0 ? Math.round(n * 100) / 100 : null;
   }
   function show(v) { return v == null ? "" : dec.format(v); }
+  // Um mês conta se for igual ou posterior ao início do registo.
+  function inRange(m) {
+    var s = state.start;
+    return !s || state.year * 12 + m >= s.year * 12 + s.month;
+  }
   function plural(n, one, many) { return n + " " + (n === 1 ? one : many); }
 
   /* ---------- Linhas ---------- */
@@ -67,6 +73,8 @@
 
     for (var m = 1; m <= 12; m++) {
       var row = rowsEl.children[m - 1], mDue = 0, mPaid = 0, total = 0;
+      row.dataset.out = inRange(m) ? "" : "1";
+      if (!inRange(m)) { row.dataset.due = ""; continue; }
       CATS.forEach(function (c) {
         var k = c[0], it = state.months[m][k];
         var cell = row.querySelector('.cell[data-k="' + k + '"]');
@@ -97,12 +105,22 @@
       if (pct != null) pcts.push(pct);
     }
 
-    $("sumPaid").textContent = eur.format(paid);
-    $("subPaid").textContent = plural(nPaid, "pagamento", "pagamentos");
-    $("sumDue").textContent = eur.format(due);
-    $("subDue").textContent = nDue ? plural(nDue, "pagamento", "pagamentos") + " em " + plural(monthsDue, "mês", "meses") : "Nada em falta";
-    $("sumAll").textContent = eur.format(paid + due);
-    $("subAll").textContent = (nPaid + nDue) ? plural(nPaid + nDue, "valor registado", "valores registados") : "Preencha os valores abaixo";
+    // Resumo do topo: acumulado dos anos anteriores + ano em edição.
+    var paidC = prev.paid + paid, dueC = prev.due + due;
+    var nPaidC = prev.paidN + nPaid, nDueC = prev.dueN + nDue, monthsDueC = prev.dueMonths + monthsDue;
+    var carried = prev.paidN + prev.dueN > 0;
+    $("sumPaid").textContent = eur.format(paidC);
+    $("subPaid").textContent = plural(nPaidC, "pagamento", "pagamentos") + (carried ? " · em " + state.year + ": " + eur.format(paid) : "");
+    $("sumDue").textContent = eur.format(dueC);
+    $("subDue").textContent = nDueC
+      ? plural(nDueC, "pagamento", "pagamentos") + " em " + plural(monthsDueC, "mês", "meses") + (carried ? " · em " + state.year + ": " + eur.format(due) : "")
+      : "Nada em falta";
+    $("sumAll").textContent = eur.format(paidC + dueC);
+    $("subAll").textContent = (nPaidC + nDueC) ? plural(nPaidC + nDueC, "valor registado", "valores registados") + (carried ? " · em " + state.year + ": " + eur.format(paid + due) : "") : "Preencha os valores abaixo";
+    var s0 = state.start;
+    $("cumNote").textContent = s0
+      ? "Totais acumulados desde " + MESES[s0.month - 1] + " de " + s0.year + " até ao fim de " + state.year + "."
+      : "Totais de " + state.year + ".";
 
     var html = "", avgTotal = 0, any = false;
     CATS.forEach(function (c) {
@@ -135,7 +153,7 @@
   function applyFilter() {
     var only = $("onlyDue").checked, visible = 0;
     Array.prototype.forEach.call(rowsEl.children, function (row) {
-      var hide = only && !row.dataset.due;
+      var hide = row.dataset.out === "1" || (only && !row.dataset.due);
       row.hidden = hide;
       if (!hide) visible++;
     });
@@ -193,6 +211,15 @@
     return base;
   }
 
+  async function loadPrev(year) {
+    var t = { paid: 0, paidN: 0, due: 0, dueN: 0, dueMonths: 0 };
+    try {
+      var r = await fetch("/api/totals?before=" + year);
+      if (r.ok) t = await r.json();
+    } catch (e) { /* sem totais anteriores: mostra só o ano */ }
+    return t;
+  }
+
   async function loadYear() {
     loaded = false;
     setStatus("A carregar…");
@@ -207,19 +234,101 @@
     state.months = merge(raw);
     state.salary = sal;
     $("salary").value = show(sal);
+    var yr = state.year;
+    var t = await loadPrev(yr);
+    if (yr !== state.year) return; // o utilizador mudou de ano entretanto
+    prev = t;
     buildRows();
     $("localNote").hidden = !failed;
     loaded = !failed; // não grava por cima de dados reais se a leitura falhou
     setStatus(failed ? "Não foi possível carregar os dados." : "", failed);
   }
 
+  function updateNav() {
+    $("prev").disabled = !!state.start && state.year <= state.start.year;
+  }
+
   async function changeYear(delta) {
+    if (delta < 0 && state.start && state.year + delta < state.start.year) return;
     clearTimeout(timer);
     if (dirty && loaded) { try { await persist(); } catch (e) {} }
     state.year += delta;
     $("yearLabel").textContent = state.year;
+    updateNav();
     await loadYear();
   }
+
+  /* ---------- Início do registo ---------- */
+  async function loadConfig() {
+    try {
+      var r = await fetch("/api/config");
+      if (!r.ok) throw new Error("http " + r.status);
+      var d = await r.json();
+      return { ok: true, start: d.start };
+    } catch (e) { return { ok: false, start: null }; }
+  }
+
+  function fillSetupOptions() {
+    var mo = "", yo = "";
+    MESES.forEach(function (n, i) { mo += '<option value="' + (i + 1) + '">' + n + "</option>"; });
+    for (var y = NOW.getFullYear() + 1; y >= 2000; y--) yo += '<option value="' + y + '">' + y + "</option>";
+    $("setMonth").innerHTML = mo;
+    $("setYear").innerHTML = yo;
+  }
+
+  function openSetup(first) {
+    var s = state.start;
+    $("setMonth").value = String(s ? s.month : NOW.getMonth() + 1);
+    $("setYear").value = String(s ? s.year : NOW.getFullYear());
+    $("setupTitle").textContent = first ? "Quando começou a registar?" : "Alterar o início do registo";
+    $("setupNote").textContent = first
+      ? "Escolha o mês e o ano do primeiro pagamento que quer registar. Os meses anteriores não aparecem nem entram nas médias."
+      : "Os meses anteriores à nova data deixam de aparecer e de contar nas médias, mas os valores já registados não são apagados.";
+    $("setupCancel").hidden = first;
+    $("setupErr").textContent = "";
+    $("setup").hidden = false;
+    $("appBody").hidden = first;
+    $("yearnav").hidden = first;
+    $("sinceLine").hidden = first;
+  }
+
+  async function enterApp() {
+    $("setup").hidden = true;
+    $("appBody").hidden = false;
+    $("yearnav").hidden = false;
+    $("sinceLine").hidden = false;
+    $("sinceText").textContent = "Registo desde " + MESES[state.start.month - 1] + " de " + state.start.year + ".";
+    if (state.year < state.start.year) state.year = state.start.year;
+    $("yearLabel").textContent = state.year;
+    updateNav();
+    await loadYear();
+    loadAverages();
+  }
+
+  $("setupForm").addEventListener("submit", async function (e) {
+    e.preventDefault();
+    var y = Number($("setYear").value), m = Number($("setMonth").value);
+    try {
+      var r = await fetch("/api/config", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ year: y, month: m })
+      });
+      if (!r.ok) throw new Error("http " + r.status);
+    } catch (err) {
+      $("setupErr").textContent = "Não foi possível guardar. Confirme que a base de dados está a correr e tente novamente.";
+      return;
+    }
+    state.start = { year: y, month: m };
+    await enterApp();
+  });
+  $("setupCancel").addEventListener("click", function () {
+    $("setup").hidden = true;
+    $("appBody").hidden = false;
+    $("yearnav").hidden = false;
+    $("sinceLine").hidden = false;
+  });
+  $("changeStart").addEventListener("click", function () { openSetup(false); $("setup").scrollIntoView({ block: "start" }); });
 
   /* ---------- Eventos ---------- */
   rowsEl.addEventListener("input", function (e) {
@@ -249,7 +358,7 @@
   window.addEventListener("pagehide", function () { if (dirty && loaded) persist(); });
 
   /* ---------- Evolução das médias anuais ---------- */
-  var SER = { renda: "--s1", luz: "--s2", gas: "--s3", agua: "--s4", tel: "--s5" };
+  var SER = { renda: "--s1", luzgas: "--s2", agua: "--s3", tel: "--s4" };
   var avgData = null, evoCharts = [];
   function css(n) { return getComputedStyle(document.documentElement).getPropertyValue(n).trim(); }
 
@@ -354,7 +463,17 @@
 
   /* ---------- Arranque ---------- */
   $("yearLabel").textContent = state.year;
+  fillSetupOptions();
   buildRows();
-  loadYear();
-  loadAverages();
+  (async function init() {
+    var cfg = await loadConfig();
+    if (!cfg.ok) {
+      $("localNote").hidden = false;
+      setStatus("Não foi possível carregar os dados.", true);
+      return;
+    }
+    if (!cfg.start) { openSetup(true); return; }
+    state.start = cfg.start;
+    await enterApp();
+  })();
 })();
